@@ -48,12 +48,9 @@ The `filename` output uses the value of the `original_filename` widget. This wid
 - If MaskEditor saves the edited image to `clipspace-painted-xxx.png`, the dropdown updates but the `original_filename` widget stays as `hero.png`
 - The filename output continues to return `hero.png` even after mask edits
 
-### Frontend Extension (Optional)
+### Frontend Extension (Automatic)
 
-The node includes a frontend extension (`custom-load-image-enhanced.js`) that automatically syncs the `original_filename` widget when you change the dropdown. To use it:
-
-1. Copy `custom-load-image-enhanced.js` to your ComfyUI custom nodes directory or place it in `web/extensions/`
-2. Restart ComfyUI
+The node includes a frontend extension that automatically syncs the `original_filename` widget when you change the dropdown. It's bundled with the custom node and loads automatically via `WEB_DIRECTORY`.
 
 Without the extension, the `original_filename` field is still available but must be manually edited.
 

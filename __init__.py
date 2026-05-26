@@ -1,5 +1,7 @@
 from .nodes import LoadImageEnhanced
 
+WEB_DIRECTORY = ["./js"]
+
 NODE_CLASS_MAPPINGS = {
     "LoadImageEnhanced": LoadImageEnhanced,
 }
