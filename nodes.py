@@ -1,4 +1,5 @@
 import os
+import re
 import hashlib
 import torch
 import numpy as np
@@ -47,14 +48,34 @@ class LoadImageEnhanced:
     RETURN_NAMES = ("image", "mask", "filename")
     FUNCTION = "load_image"
 
+    def _resolve_image_path(self, image):
+        """Resolve an image reference to a filesystem path."""
+        input_dir = folder_paths.get_input_directory()
+
+        # Strip ComfyUI's [input] annotation suffix if present (added by some internal routing)
+        clean_image = re.sub(r'\s*\[input\]\s*$', '', image).strip()
+
+        # Strategy 1: normal path from dropdown (e.g., "characters/hero.png")
+        candidate = os.path.join(input_dir, clean_image)
+        if os.path.isfile(candidate):
+            return candidate
+
+        # Strategy 2: treat the reference as a direct relative path (handles clipspace/ etc.)
+        if os.path.isfile(clean_image):
+            return clean_image
+
+        # Strategy 3: search for the file anywhere under input_dir (handles nested subfolders)
+        target_basename = os.path.basename(clean_image)
+        for root, dirs, files in os.walk(input_dir):
+            if target_basename in files:
+                return os.path.join(root, target_basename)
+
+        # Fallback: return original string and let PIL raise a descriptive error
+        return image
+
     def load_image(self, image):
         input_dir = folder_paths.get_input_directory()
-        image_path = os.path.join(input_dir, image)
-
-        # If the file doesn't exist at the joined path, try treating `image` as a relative path from input_dir directly.
-        # This handles cases where ComfyUI (e.g., mask editor) references images from excluded folders like clipspace.
-        if not os.path.isfile(image_path):
-            image_path = image
+        image_path = self._resolve_image_path(image)
 
         img = node_helpers.pillow(Image.open, image_path)
 
@@ -105,11 +126,17 @@ class LoadImageEnhanced:
 
     @classmethod
     def IS_CHANGED(s, image):
-        image_path = folder_paths.get_annotated_filepath(image)
-        m = hashlib.sha256()
-        with open(image_path, 'rb') as f:
-            m.update(f.read())
-        return m.digest().hex()
+        # Use the same resolution logic to get a valid file path
+        temp_node = s()
+        image_path = temp_node._resolve_image_path(image)
+        try:
+            m = hashlib.sha256()
+            with open(image_path, 'rb') as f:
+                m.update(f.read())
+            return m.digest().hex()
+        except (FileNotFoundError, PermissionError):
+            # If we can't read the file for hashing, return a hash of the image ref string
+            return hashlib.sha256(image.encode()).hexdigest()
 
     @classmethod
     def VALIDATE_INPUTS(s, image):
