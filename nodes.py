@@ -40,7 +40,7 @@ class LoadImageEnhanced:
         return {"required":
                     {"image": (sorted(filtered_files), {"image_upload": True})},
                 "optional": {
-                    "original_filename": ("STRING", {"default": ""}),
+                    "original_filename": ("STRING", {"default": "", "forceInput": True}),
                 },
                 }
 
