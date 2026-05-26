@@ -39,7 +39,7 @@ class LoadImageEnhanced:
         filtered_files = folder_paths.filter_files_content_types(all_files, ["image"])
         return {"required":
                     {"image": (sorted(filtered_files), {"image_upload": True})},
-                "extra_widget": {
+                "optional": {
                     "original_filename": ("STRING", {"default": ""}),
                 },
                 }
