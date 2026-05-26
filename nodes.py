@@ -15,10 +15,13 @@ def _collect_images_recursive(input_dir):
     """Recursively collect image files from input directory, excluding certain subfolders."""
     image_files = []
     for root, dirs, files in os.walk(input_dir):
-        # Filter out excluded directories in-place so os.walk skips them
-        dirs[:] = [d for d in dirs if d not in EXCLUDED_FOLDERS]
+        # Filter out excluded and hidden directories in-place so os.walk skips them
+        dirs[:] = sorted([d for d in dirs if d not in EXCLUDED_FOLDERS and not d.startswith(".")])
 
         for filename in files:
+            # Skip hidden files (starting with ".")
+            if filename.startswith("."):
+                continue
             filepath = os.path.join(root, filename)
             # Create relative path from input_dir root
             rel_path = os.path.relpath(filepath, input_dir)
@@ -47,6 +50,11 @@ class LoadImageEnhanced:
     def load_image(self, image):
         input_dir = folder_paths.get_input_directory()
         image_path = os.path.join(input_dir, image)
+
+        # If the file doesn't exist at the joined path, try treating `image` as a relative path from input_dir directly.
+        # This handles cases where ComfyUI (e.g., mask editor) references images from excluded folders like clipspace.
+        if not os.path.isfile(image_path):
+            image_path = image
 
         img = node_helpers.pillow(Image.open, image_path)
 

@@ -10,7 +10,7 @@ This custom node extends ComfyUI's image loading functionality with filename out
 - **Compatible**: Maintains all original functionality (IMAGE and MASK outputs)
 - **Multi-frame Support**: Supports animated images (e.g., GIFs) with multi-frame iteration
 - **EXIF Handling**: Automatically applies EXIF orientation rotation
-- **Subfolder Listing**: Recursively lists images from subfolders (excludes `clipspace`, `3d`, `pasted`)
+- **Subfolder Listing**: Recursively lists images from subfolders (excludes `clipspace`, `3d`, `pasted`, and any folder/file starting with `.`)
 
 ## Installation
 
@@ -37,7 +37,9 @@ This custom node extends ComfyUI's image loading functionality with filename out
 ## Notes
 
 - The node recursively lists all images in the input folder and its subfolders
-- Images inside `clipspace`, `3d`, and `pasted` folders are excluded from the listing
+- Images inside `clipspace`, `3d`, `pasted`, and any hidden (starting with `.`) folders are excluded from the **dropdown listing**
+- Any file starting with `.` (e.g., `.DS_Store`) is also excluded from the listing
+- However, if a downstream node (e.g., mask editor) passes an image path from an excluded folder, the node will still load it correctly
 - Images with multiple frames (e.g., animated GIFs) are processed frame-by-frame and concatenated
 - If no alpha channel is found in an image, a default 64x64 mask is returned
 - The node automatically handles EXIF orientation for proper image display
