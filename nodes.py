@@ -2,9 +2,7 @@ import os
 import re
 import hashlib
 import torch
-import numpy as np
 from PIL import Image, ImageOps, ImageSequence
-from PIL.PngImagePlugin import PngInfo
 import folder_paths
 import node_helpers
 
@@ -40,15 +38,12 @@ class LoadImageEnhanced:
         filtered_files = folder_paths.filter_files_content_types(all_files, ["image"])
         return {"required":
                     {"image": (sorted(filtered_files), {"image_upload": True})},
-                "hidden": {
-                    "_original_filename": ("STRING", {"default": ""}),
-                },
                 }
 
     CATEGORY = "image"
 
-    RETURN_TYPES = ("IMAGE", "MASK", "STRING")
-    RETURN_NAMES = ("image", "mask", "filename")
+    RETURN_TYPES = ("IMAGE", "MASK")
+    RETURN_NAMES = ("image", "mask")
     FUNCTION = "load_image"
 
     def _resolve_image_path(self, image):
@@ -76,7 +71,7 @@ class LoadImageEnhanced:
         # Fallback: return original string and let PIL raise a descriptive error
         return image
 
-    def load_image(self, image, _original_filename=""):
+    def load_image(self, image):
         input_dir = folder_paths.get_input_directory()
         image_path = self._resolve_image_path(image)
 
@@ -122,10 +117,7 @@ class LoadImageEnhanced:
             output_image = output_images[0]
             output_mask = output_masks[0]
 
-        # Use cached original filename from widget if available; otherwise use current file's basename
-        filename = _original_filename if _original_filename else os.path.basename(image_path)
-
-        return (output_image, output_mask, filename)
+        return (output_image, output_mask)
 
     @classmethod
     def IS_CHANGED(s, image):
