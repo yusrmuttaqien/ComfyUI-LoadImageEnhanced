@@ -11,6 +11,27 @@ import node_helpers
 
 EXCLUDED_FOLDERS = {"clipspace", "3d", "pasted"}
 
+# Cache original filenames by content hash so that when the same image
+# is loaded from a different path (e.g. clipspace copy), we return the
+# original filename instead of the current file's basename.
+_FILENAME_CACHE: dict[str, str] = {}
+
+
+def _content_hash(filepath):
+    """Compute SHA256 hash of a file's contents."""
+    m = hashlib.sha256()
+    with open(filepath, 'rb') as f:
+        m.update(f.read())
+    return m.hexdigest()
+
+
+def _get_original_filename(image_path):
+    """Return the cached original filename for an image path."""
+    h = _content_hash(image_path)
+    if h not in _FILENAME_CACHE:
+        _FILENAME_CACHE[h] = os.path.basename(image_path)
+    return _FILENAME_CACHE[h]
+
 
 def _collect_images_recursive(input_dir):
     """Recursively collect image files from input directory, excluding certain subfolders."""
@@ -119,8 +140,8 @@ class LoadImageEnhanced:
             output_image = output_images[0]
             output_mask = output_masks[0]
 
-        # Extract filename from the image path
-        filename = os.path.basename(image_path)
+        # Return cached original filename so mask-editor copies keep the original name
+        filename = _get_original_filename(image_path)
 
         return (output_image, output_mask, filename)
 
