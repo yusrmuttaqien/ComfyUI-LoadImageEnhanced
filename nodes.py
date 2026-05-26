@@ -7,6 +7,11 @@ from PIL import Image, ImageOps, ImageSequence
 import folder_paths
 import node_helpers
 
+try:
+    from comfy.comfy_types import IO, ComfyNodeABC, CheckLazyMixin
+except ImportError:
+    ComfyNodeABC = object  # fallback for older versions
+
 
 EXCLUDED_FOLDERS = {"clipspace", "3d", "pasted"}
 
@@ -30,22 +35,30 @@ def _collect_images_recursive(input_dir):
     return image_files
 
 
-class LoadImageEnhanced:
+class LoadImageEnhanced(ComfyNodeABC):
     @classmethod
     def INPUT_TYPES(s):
         input_dir = folder_paths.get_input_directory()
         all_files = _collect_images_recursive(input_dir)
         # Filter for image content types
         filtered_files = folder_paths.filter_files_content_types(all_files, ["image"])
-        return {"required":
-                    {"image": (sorted(filtered_files), {"image_upload": True}),
-                     "original_filename": ("STRING", {"default": "", "custom_text": True})},
-                }
+        return {
+            "required": {
+                "image": (sorted(filtered_files), {"image_upload": True}),
+                "original_filename": ("STRING", {"default": "", "custom_text": True}),
+            },
+        }
 
     CATEGORY = "image"
+    DESCRIPTION = "Load an image and return the filename. Supports recursive subfolder listing."
 
     RETURN_TYPES = ("IMAGE", "MASK", "STRING")
     RETURN_NAMES = ("image", "mask", "filename")
+    OUTPUT_TOOLTIPS = (
+        "The loaded image tensor.",
+        "The image mask (if available).",
+        "The original filename of the loaded image.",
+    )
     FUNCTION = "load_image"
 
     def _resolve_image_path(self, image):
@@ -73,7 +86,7 @@ class LoadImageEnhanced:
         # Fallback: return original string and let PIL raise a descriptive error
         return image
 
-    def load_image(self, image, original_filename=""):
+    def load_image(self, image: str, original_filename: str = ""):
         input_dir = folder_paths.get_input_directory()
         image_path = self._resolve_image_path(image)
 

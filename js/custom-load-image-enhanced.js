@@ -22,7 +22,6 @@
 
         nodeCreated: function (node) {
             if (node.comfyClass === "LoadImageEnhanced") {
-                // Use setTimeout to ensure widgets are fully initialized
                 setTimeout(function () {
                     syncOriginalFilename(node);
                 }, 0);

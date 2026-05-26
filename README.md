@@ -5,7 +5,7 @@ This custom node extends ComfyUI's image loading functionality with filename out
 ## Features
 
 ### LoadImageEnhanced
-- **Enhanced Load Image Node**: Based on the original ComfyUI LoadImage node
+- **Enhanced Load Image Node**: Based on the original ComfyUI LoadImage node, inheriting from `ComfyNodeABC`
 - **Compatible**: Maintains all original functionality (IMAGE and MASK outputs)
 - **Filename Output**: Returns the filename of the loaded image as a STRING output
 - **Original Filename Tracking**: Preserves the original filename even when the image is modified by tools like MaskEditor
@@ -15,7 +15,7 @@ This custom node extends ComfyUI's image loading functionality with filename out
 
 ## Installation
 
-1. Place `nodes.py` in your ComfyUI `custom_nodes` directory
+1. Place the entire `ComfyUI-LoadImageWithFilename` folder in your ComfyUI `custom_nodes` directory
 2. Restart ComfyUI
 3. The new node will appear in the "image" category
 
