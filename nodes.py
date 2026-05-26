@@ -1,6 +1,7 @@
 import os
 import re
 import hashlib
+import numpy as np
 import torch
 from PIL import Image, ImageOps, ImageSequence
 import folder_paths
