@@ -1,12 +1,14 @@
 # ComfyUI LoadImageEnhanced
 
-This custom node extends ComfyUI's image loading functionality.
+This custom node extends ComfyUI's image loading functionality with filename output and original filename tracking.
 
 ## Features
 
 ### LoadImageEnhanced
 - **Enhanced Load Image Node**: Based on the original ComfyUI LoadImage node
 - **Compatible**: Maintains all original functionality (IMAGE and MASK outputs)
+- **Filename Output**: Returns the filename of the loaded image as a STRING output
+- **Original Filename Tracking**: Preserves the original filename even when the image is modified by tools like MaskEditor
 - **Multi-frame Support**: Supports animated images (e.g., GIFs) with multi-frame iteration
 - **EXIF Handling**: Automatically applies EXIF orientation rotation
 - **Subfolder Listing**: Recursively lists images from subfolders (excludes `clipspace`, `3d`, `pasted`, and any folder/file starting with `.`)
@@ -21,9 +23,13 @@ This custom node extends ComfyUI's image loading functionality.
 
 ### LoadImageEnhanced
 - **Input**: Select an image file from the dropdown (includes images from subfolders)
+- **Inputs**:
+  - `image` — Image filename to load
+  - `original_filename` — Text field that stores the original selected filename (editable by user)
 - **Outputs**:
   - `image`: The loaded image tensor
   - `mask`: The image mask (if available)
+  - `filename`: The filename of the loaded image
 
 ## Requirements
 
@@ -33,6 +39,23 @@ This custom node extends ComfyUI's image loading functionality.
 - NumPy
 
 ## Notes
+
+### Filename Tracking
+
+The `filename` output uses the value of the `original_filename` widget. This widget is automatically updated when you select a new image from the dropdown, but is **not** changed by downstream tools like MaskEditor. This means:
+
+- When you first select an image (e.g., `characters/hero.png`), the filename output is `hero.png`
+- If MaskEditor saves the edited image to `clipspace-painted-xxx.png`, the dropdown updates but the `original_filename` widget stays as `hero.png`
+- The filename output continues to return `hero.png` even after mask edits
+
+### Frontend Extension (Optional)
+
+The node includes a frontend extension (`custom-load-image-enhanced.js`) that automatically syncs the `original_filename` widget when you change the dropdown. To use it:
+
+1. Copy `custom-load-image-enhanced.js` to your ComfyUI custom nodes directory or place it in `web/extensions/`
+2. Restart ComfyUI
+
+Without the extension, the `original_filename` field is still available but must be manually edited.
 
 - The node recursively lists all images in the input folder and its subfolders
 - Images inside `clipspace`, `3d`, `pasted`, and any hidden (starting with `.`) folders are excluded from the **dropdown listing**

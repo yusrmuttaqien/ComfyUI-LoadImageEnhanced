@@ -39,12 +39,15 @@ class LoadImageEnhanced:
         filtered_files = folder_paths.filter_files_content_types(all_files, ["image"])
         return {"required":
                     {"image": (sorted(filtered_files), {"image_upload": True})},
+                "extra_widget": {
+                    "original_filename": ("STRING", {"default": ""}),
+                },
                 }
 
     CATEGORY = "image"
 
-    RETURN_TYPES = ("IMAGE", "MASK")
-    RETURN_NAMES = ("image", "mask")
+    RETURN_TYPES = ("IMAGE", "MASK", "STRING")
+    RETURN_NAMES = ("image", "mask", "filename")
     FUNCTION = "load_image"
 
     def _resolve_image_path(self, image):
@@ -72,7 +75,7 @@ class LoadImageEnhanced:
         # Fallback: return original string and let PIL raise a descriptive error
         return image
 
-    def load_image(self, image):
+    def load_image(self, image, original_filename=""):
         input_dir = folder_paths.get_input_directory()
         image_path = self._resolve_image_path(image)
 
@@ -118,7 +121,10 @@ class LoadImageEnhanced:
             output_image = output_images[0]
             output_mask = output_masks[0]
 
-        return (output_image, output_mask)
+        # Use the original_filename widget value if provided; otherwise fall back to current file's basename
+        filename = original_filename if original_filename else os.path.basename(image_path)
+
+        return (output_image, output_mask, filename)
 
     @classmethod
     def IS_CHANGED(s, image):
