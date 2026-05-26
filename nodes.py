@@ -11,27 +11,6 @@ import node_helpers
 
 EXCLUDED_FOLDERS = {"clipspace", "3d", "pasted"}
 
-# Cache original filenames by content hash so that when the same image
-# is loaded from a different path (e.g. clipspace copy), we return the
-# original filename instead of the current file's basename.
-_FILENAME_CACHE: dict[str, str] = {}
-
-
-def _content_hash(filepath):
-    """Compute SHA256 hash of a file's contents."""
-    m = hashlib.sha256()
-    with open(filepath, 'rb') as f:
-        m.update(f.read())
-    return m.hexdigest()
-
-
-def _get_original_filename(image_path):
-    """Return the cached original filename for an image path."""
-    h = _content_hash(image_path)
-    if h not in _FILENAME_CACHE:
-        _FILENAME_CACHE[h] = os.path.basename(image_path)
-    return _FILENAME_CACHE[h]
-
 
 def _collect_images_recursive(input_dir):
     """Recursively collect image files from input directory, excluding certain subfolders."""
@@ -61,6 +40,9 @@ class LoadImageEnhanced:
         filtered_files = folder_paths.filter_files_content_types(all_files, ["image"])
         return {"required":
                     {"image": (sorted(filtered_files), {"image_upload": True})},
+                "hidden": {
+                    "_original_filename": ("STRING", {"default": ""}),
+                },
                 }
 
     CATEGORY = "image"
@@ -94,7 +76,7 @@ class LoadImageEnhanced:
         # Fallback: return original string and let PIL raise a descriptive error
         return image
 
-    def load_image(self, image):
+    def load_image(self, image, _original_filename=""):
         input_dir = folder_paths.get_input_directory()
         image_path = self._resolve_image_path(image)
 
@@ -140,8 +122,8 @@ class LoadImageEnhanced:
             output_image = output_images[0]
             output_mask = output_masks[0]
 
-        # Return cached original filename so mask-editor copies keep the original name
-        filename = _get_original_filename(image_path)
+        # Use cached original filename from widget if available; otherwise use current file's basename
+        filename = _original_filename if _original_filename else os.path.basename(image_path)
 
         return (output_image, output_mask, filename)
 
