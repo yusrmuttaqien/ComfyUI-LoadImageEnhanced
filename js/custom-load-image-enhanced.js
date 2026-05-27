@@ -1,61 +1,34 @@
-(function () {
-  app.registerExtension({
-    name: "LoadImageEnhanced.FilenameSync",
+import { app } from "../../scripts/app.js";
 
-    setup: function () {
-      console.log("[LoadImageEnhanced] Filename sync extension loaded.");
-    },
+app.registerExtension({
+  name: "LoadImageEnhanced.FilenameSync",
 
-    nodeCreated: function (node) {
-      // Only apply to your specific custom node
-      if (!node || node.comfyClass !== "LoadImageEnhanced") {
-        return;
-      }
+  async beforeRegisterNodeDef(nodeType, nodeData, app) {
+    if (nodeType.comfyClass !== "LoadImageEnhanced") {
+      return;
+    }
 
-      // A tiny delay ensures ComfyUI has finished building the Python-defined widgets
-      setTimeout(function () {
-        var imageWidget =
-          node.widgets &&
-          node.widgets.find(function (w) {
-            return w.name === "image";
-          });
-        var filenameWidget =
-          node.widgets &&
-          node.widgets.find(function (w) {
-            return w.name === "original_filename";
-          });
+    const origOnCreated = nodeType.prototype.onNodeCreated;
+    nodeType.prototype.onNodeCreated = function () {
+      const result = origOnCreated?.apply(this, arguments);
 
-        if (!imageWidget || !filenameWidget) {
-          console.warn(
-            "[LoadImageEnhanced] Could not find 'image' or 'original_filename' widgets.",
-          );
-          return;
-        }
+      const imageWidget = this.widgets.find((w) => w.name === "image");
+      const filenameWidget = this.widgets.find(
+        (w) => w.name === "original_filename"
+      );
 
-        // 1. Save the original callback so we don't break ComfyUI's image preview logic
-        var origCallback = imageWidget.callback;
-
-        // 2. Override the callback to intercept USER actions
-        imageWidget.callback = function (
-          value,
-          canvas,
-          node_param,
-          pos,
-          event,
-        ) {
-          // If a valid string is selected/uploaded, update the filename widget
+      if (imageWidget && filenameWidget) {
+        const origCallback = imageWidget.callback;
+        imageWidget.callback = (value, ...args) => {
           if (value && typeof value === "string") {
-            // Regex split handles both Windows (\) and Unix (/) path separators
-            var newFilename = value.split(/[\/\\]/).pop();
+            const newFilename = value.split(/[\/\\]/).pop();
             filenameWidget.value = newFilename;
           }
-
-          // 3. Always fire the original callback so ComfyUI functions normally
-          if (origCallback) {
-            return origCallback.apply(this, arguments);
-          }
+          return origCallback?.apply(this, args);
         };
-      }, 10);
-    },
-  });
-})();
+      }
+
+      return result;
+    };
+  },
+});
